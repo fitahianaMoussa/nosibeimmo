@@ -16,6 +16,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\Column;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -76,6 +78,10 @@ class ImmobilierResource extends Resource
                 TextInput::make('titre')
                     ->required()
                     ->maxLength(255),
+                    TextInput::make('reference')
+                    ->required()
+                    ->maxLength(255)
+                    ->disabled(),
                 TextInput::make('prix')
                     ->numeric()
                     ->required(),
@@ -137,7 +143,15 @@ class ImmobilierResource extends Resource
                 TextColumn::make('prix')->sortable(),
                 TextColumn::make('surface')->sortable(),
                 TextColumn::make('reference'),
-            ])
+                TextColumn::make('images')
+                ->label('Images')
+                ->formatStateUsing(function ($record) {
+                    $images = ImageModel::where('immobilier_id', $record->id)->get();
+                    return view('immobilier_images', ['images' => $images])->render();
+                })
+                ->html(), // Render HTML in the column
+        ])
+                 
             ->filters([
                 SelectFilter::make('categorie_id')
                     ->label('Category')
@@ -180,6 +194,7 @@ class ImmobilierResource extends Resource
             'index' => Pages\ListImmobiliers::route('/'),
             'create' => Pages\CreateImmobilier::route('/create'),
             'edit' => Pages\EditImmobilier::route('/{record}/edit'),
+           
         ];
     }
 
