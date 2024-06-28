@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Filament\Resources\ImmobilierResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,5 +43,14 @@ class Immobilier extends Model
         return $this->belongsTo(Category::class, 'categorie_id');
     }
 
-    
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->reference)) {
+                $model->reference = ImmobilierResource::generateReference($model->categorie_id, $model->subcategory_id);
+            }
+        });
+    }
 }

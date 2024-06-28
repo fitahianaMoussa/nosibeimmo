@@ -17,6 +17,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class ImmobilierResource extends Resource
 {
     protected static ?string $model = Immobilier::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
     public static function generateReference($categoryId, $subcategoryId) {
         if (!$categoryId || !$subcategoryId) {
@@ -34,8 +35,8 @@ class ImmobilierResource extends Resource
 
         $category = Category::find($categoryId);
         $subcategory = Subcategory::find($subcategoryId);
-        $categoryInitial = strtoupper(substr($category->nom, 0, 1));
-        $subcategoryInitial = strtoupper(substr($subcategory->nom, 0, 1));
+        $categoryInitial = $category->nom == 'Vente' ? 'VT' : 'LC';
+        $subcategoryInitial = strtoupper(substr($subcategory->nom, 0, 2));
         $count = Immobilier::where('subcategory_id', $subcategoryId)->count();
         $incrementedCount = str_pad($count + 1, 2, '0', STR_PAD_LEFT);
         return $categoryInitial . $subcategoryInitial . ' ' . $incrementedCount;
@@ -73,9 +74,6 @@ class ImmobilierResource extends Resource
                         }
                     }),
                 TextInput::make('titre')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('reference')
                     ->required()
                     ->maxLength(255),
                 TextInput::make('prix')
@@ -141,7 +139,22 @@ class ImmobilierResource extends Resource
                 TextColumn::make('reference'),
             ])
             ->filters([
-                //
+                SelectFilter::make('categorie_id')
+                    ->label('Category')
+                    ->options(Category::all()->pluck('nom', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        if ($data['value']) {
+                            $query->where('categorie_id', $data['value']);
+                        }
+                    }),
+                SelectFilter::make('subcategory_id')
+                    ->label('Subcategory')
+                    ->options(Subcategory::all()->pluck('nom', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        if ($data['value']) {
+                            $query->where('subcategory_id', $data['value']);
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -177,3 +190,4 @@ class ImmobilierResource extends Resource
         ];
     }
 }
+
